@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-
+from lime.lime_tabular import LimeTabularExplainer
 # Load dataset
 file_path = "depression_anxiety_data.csv"
 data = pd.read_csv(file_path)
@@ -112,3 +112,11 @@ if st.sidebar.button("Predict"):
     prediction_label = label_enc.inverse_transform(prediction)[0]
     st.subheader("Prediction")
     st.write(f"The model predicts: **{prediction_label}**")
+     # LIME explanation
+    explainer = LimeTabularExplainer(X_train.values, feature_names=X_train.columns.tolist(),
+                                     class_names=label_enc.classes_, discretize_continuous=True)
+    explanation = explainer.explain_instance(processed_input.values[0], model.predict_proba)
+    
+    st.subheader("LIME Explanation")
+    st.write(explanation.as_list())
+    st.pyplot(explanation.as_pyplot_figure())
