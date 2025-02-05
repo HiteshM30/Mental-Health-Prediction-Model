@@ -9,6 +9,19 @@ This is a Streamlit-based web application that predicts depression diagnoses bas
 - Implements LIME to explain individual predictions.
 - Supports categorical feature encoding using OneHotEncoder.
 
+## Dataset Preprocessing Steps
+
+- Load dataset and drop unnecessary columns (e.g., ID).
+- Handle missing values using SimpleImputer with the "most_frequent" strategy.
+- Identify categorical columns and convert them to string type.
+- Apply One-Hot Encoding to categorical variables using OneHotEncoder.
+- Label encode the target variable (depression_diagnosis) using LabelEncoder.
+- Split the dataset into training and testing sets (80-20 split).
+- Model Selection Rationale
+- XGBoost Classifier was chosen due to its high accuracy, ability to handle imbalanced datasets, and robustness in handling categorical and numerical features.
+- The model was trained using default parameters, which can be fine-tuned for better performance.
+- LIME was integrated for model interpretability to understand feature importance.
+
 ## Installation
 
 ### Prerequisites

@@ -1,65 +1,15 @@
-import pandas as pd
-import numpy as np
 import pickle
+import pandas as pd
 import streamlit as st
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 from lime.lime_tabular import LimeTabularExplainer
-# Load dataset
-file_path = "depression_anxiety_data.csv"
-data = pd.read_csv(file_path)
 
-data.drop(columns=["id"], errors="ignore", inplace=True)
-
-# Fill missing values
-imputer = SimpleImputer(strategy="most_frequent")
-data[:] = imputer.fit_transform(data)
-
-
-# Identify categorical columns
-categorical_columns = data.select_dtypes(include=["object"]).columns.tolist()
-categorical_columns.remove("depression_diagnosis")
-
-data[categorical_columns] = data[categorical_columns].astype(str)
-
-# One-hot encoding categorical columns
-one_hot_encoder = OneHotEncoder(drop="first", sparse_output=False, handle_unknown="ignore")
-encoded_features = one_hot_encoder.fit_transform(data[categorical_columns])
-encoded_feature_names = one_hot_encoder.get_feature_names_out(categorical_columns)
-encoded_df = pd.DataFrame(encoded_features, columns=encoded_feature_names)
-
-# Label encoding target variable
-label_encoder = LabelEncoder()
-data["depression_diagnosis"] = label_encoder.fit_transform(data["depression_diagnosis"])
-
-# Combine numerical and encoded categorical features
-processed_data = pd.concat([data.drop(columns=categorical_columns), encoded_df], axis=1)
-
-# Split dataset
-X = processed_data.drop(columns=["depression_diagnosis"])
-y = processed_data["depression_diagnosis"]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Train models
-xgb_model = XGBClassifier()
-xgb_model.fit(X_train, y_train)
-
-# Save models and encoders
-pickle.dump(xgb_model, open("mental_health_model.pkl", "wb"))
-pickle.dump(one_hot_encoder, open("one_hot_encoder.pkl", "wb"))
-pickle.dump(label_encoder, open("label_encoder.pkl", "wb"))
-
-# Load models for Streamlit
+# Load models and encoders
 model = pickle.load(open("mental_health_model.pkl", "rb"))
 encoder = pickle.load(open("one_hot_encoder.pkl", "rb"))
 label_enc = pickle.load(open("label_encoder.pkl", "rb"))
 
 st.title("Depression Diagnosis Predictor")
 
-# Function to capture user input
 def user_input_features():
     st.sidebar.header("User Input Features")
     gender = st.sidebar.selectbox("Select Gender", ['male', 'female'])
@@ -88,9 +38,7 @@ st.write(input_df)
 # Preprocess user input
 def preprocess_input(user_df):
     categorical_columns = user_df.select_dtypes(include=["object"]).columns.tolist()
-    
-    for col in categorical_columns:
-        user_df[col] = user_df[col].astype(str)
+    user_df[categorical_columns] = user_df[categorical_columns].astype(str)
     
     encoded_features = encoder.transform(user_df[categorical_columns])
     encoded_df = pd.DataFrame(encoded_features, columns=encoder.get_feature_names_out(categorical_columns))
@@ -112,9 +60,12 @@ if st.sidebar.button("Predict"):
     prediction_label = label_enc.inverse_transform(prediction)[0]
     st.subheader("Prediction")
     st.write(f"The model predicts: **{prediction_label}**")
-     # LIME explanation
-    explainer = LimeTabularExplainer(X_train.values, feature_names=X_train.columns.tolist(),
-                                     class_names=label_enc.classes_, discretize_continuous=True)
+    
+    # LIME explanation
+    explainer = LimeTabularExplainer(model.feature_importances_.reshape(1, -1),
+                                     feature_names=processed_input.columns.tolist(),
+                                     class_names=label_enc.classes_,
+                                     discretize_continuous=True)
     explanation = explainer.explain_instance(processed_input.values[0], model.predict_proba)
     
     st.subheader("LIME Explanation")
