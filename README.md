@@ -34,7 +34,7 @@ pip install pandas numpy streamlit scikit-learn xgboost lime pickle-mixin
 
 1. Clone the repository:
 ```bash
-git clone <repository_url>
+git clone <https://github.com/HiteshM30/Mental-Health-Prediction-Model.git>
 cd <repository_folder>
 ```
 
@@ -66,9 +66,6 @@ LIME is used to explain the model's predictions by showing the most influential 
 - After making a prediction, a LIME explanation is generated.
 - The explanation highlights key features affecting the model's decision.
 - The results are displayed as text and a visual plot.
-
-## License
-This project is licensed under the MIT License.
 
 ## Author
 Hitesh Matharu
